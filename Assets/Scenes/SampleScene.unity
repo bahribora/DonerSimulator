@@ -1688,6 +1688,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3ea4c6ef9e9aee84c9c750e2379caf82, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HeldWrap
+  BaseMaterial: {fileID: 2100000, guid: a1a1a5e238ef62d48a52c9144e08cb24, type: 2}
   HoldPosition: {x: 0.32, y: -0.3, z: 0.7}
   HoldEuler: {x: -55, y: -15, z: 0}
 --- !u!1001 &394628208
@@ -3804,6 +3805,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2e1e6c9d3e259194abca7baec39cbf30, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DonerMachine
+  BaseMaterial: {fileID: 2100000, guid: a1a1a5e238ef62d48a52c9144e08cb24, type: 2}
   MeatHeight: 1
   BottomRadius: 0.14
   TopRadius: 0.26

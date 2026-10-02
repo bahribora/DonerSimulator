@@ -2,6 +2,9 @@ using UnityEngine;
 
 public class DonerMachine : MonoBehaviour
 {
+    [Header("Build'de pembe çıkmaması için URP malzemesi")]
+    public Material BaseMaterial;
+
     [Header("Et boyutları")]
     public float MeatHeight = 1.0f;
     public float BottomRadius = 0.14f;
@@ -15,6 +18,9 @@ public class DonerMachine : MonoBehaviour
 
     void Awake()
     {
+        if (BaseMaterial == null)
+            Debug.LogWarning("DonerMachine: BaseMaterial boş. Build'de parçalar pembe çıkabilir.");
+
         Build();
     }
 
@@ -101,6 +107,7 @@ public class DonerMachine : MonoBehaviour
         g.transform.localScale = scale;
 
         Renderer r = g.GetComponent<Renderer>();
+        if (BaseMaterial != null) r.material = new Material(BaseMaterial);
         r.material.color = color;
 
         return g.transform;

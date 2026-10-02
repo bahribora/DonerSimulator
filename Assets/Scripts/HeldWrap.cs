@@ -4,6 +4,9 @@ using UnityEngine;
 [RequireComponent(typeof(FirstPersonController))]
 public class HeldWrap : MonoBehaviour
 {
+    [Header("Build'de pembe çıkmaması için URP malzemesi")]
+    public Material BaseMaterial;
+
     [Header("Dürümün kamera önündeki yeri")]
     public Vector3 HoldPosition = new Vector3(0.32f, -0.3f, 0.7f);
     public Vector3 HoldEuler = new Vector3(-55f, -15f, 0f);
@@ -40,6 +43,9 @@ public class HeldWrap : MonoBehaviour
             enabled = false;
             return;
         }
+
+        if (BaseMaterial == null)
+            Debug.LogWarning("HeldWrap: BaseMaterial boş. Build'de elindeki dürüm pembe çıkabilir.");
 
         if (WrapManager.Instance != null) WrapManager.Instance.WrapEnded += OnWrapEnded;
     }
@@ -102,6 +108,7 @@ public class HeldWrap : MonoBehaviour
         t.localScale = new Vector3(size.x, 0.0001f, size.z);
 
         Renderer r = cube.GetComponent<Renderer>();
+        if (BaseMaterial != null) r.material = new Material(BaseMaterial);
         r.material.color = ColorFor(ing);
         r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
         r.receiveShadows = false;

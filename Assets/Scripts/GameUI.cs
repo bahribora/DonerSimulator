@@ -10,6 +10,11 @@ public class GameUI : MonoBehaviour
         public Text[] Lines = new Text[6];
     }
 
+    static readonly Color Gold = new Color(1f, 0.85f, 0.2f);
+    static readonly Color Green = new Color(0.4f, 1f, 0.4f);
+    static readonly Color Grey = new Color(0.5f, 0.5f, 0.5f);
+    static readonly Color Pink = new Color(1f, 0.5f, 0.5f);
+
     Canvas canvas;
     RectTransform canvasRect;
     Font font;
@@ -26,6 +31,12 @@ public class GameUI : MonoBehaviour
     GameObject holdRoot;
     RectTransform holdFill;
 
+    GameObject screenRoot;
+    RectTransform panelRect;
+    Text screenTitle;
+    Text[] screenLines = new Text[12];
+    Text screenHint;
+
     Bubble[] bubbles = new Bubble[0];
 
     void Awake()
@@ -34,6 +45,7 @@ public class GameUI : MonoBehaviour
         BuildCanvas();
         BuildHud();
         BuildCrosshair();
+        BuildScreen();
     }
 
     void Start()
@@ -174,7 +186,7 @@ public class GameUI : MonoBehaviour
         handText = PaddedText(handPanel, 28, Color.white, TextAnchor.MiddleLeft);
 
         RectTransform waitPanel = TopLeftPanel("WaitingPanel", 20f, 156f, 520f, 48f);
-        Text waitText = PaddedText(waitPanel, 26, new Color(1f, 0.85f, 0.2f), TextAnchor.MiddleLeft);
+        Text waitText = PaddedText(waitPanel, 26, Gold, TextAnchor.MiddleLeft);
         waitText.text = "Müşteri bekleniyor...";
         waitingPanel = waitPanel.gameObject;
 
@@ -247,6 +259,46 @@ public class GameUI : MonoBehaviour
         holdRoot.SetActive(false);
     }
 
+    // Menü, duraklatma ve gün raporu için ortak ekran
+    void BuildScreen()
+    {
+        Image dim = NewImage("Screen", canvas.transform, new Color(0f, 0f, 0f, 0.8f));
+        screenRoot = dim.gameObject;
+        RectTransform dr = dim.rectTransform;
+        dr.anchorMin = Vector2.zero;
+        dr.anchorMax = Vector2.one;
+        dr.offsetMin = Vector2.zero;
+        dr.offsetMax = Vector2.zero;
+
+        Image panel = NewImage("Panel", screenRoot.transform, new Color(0.12f, 0.12f, 0.12f, 1f));
+        panelRect = panel.rectTransform;
+        panelRect.anchorMin = new Vector2(0.5f, 0.5f);
+        panelRect.anchorMax = new Vector2(0.5f, 0.5f);
+        panelRect.pivot = new Vector2(0.5f, 0.5f);
+        panelRect.anchoredPosition = Vector2.zero;
+        panelRect.sizeDelta = new Vector2(780f, 600f);
+
+        screenTitle = NewText("Title", panelRect, 54, Gold, TextAnchor.MiddleCenter);
+        screenTitle.fontStyle = FontStyle.Bold;
+        SetTopStretch(screenTitle.rectTransform, 0f, 0f, 25f, 70f);
+
+        for (int i = 0; i < screenLines.Length; i++)
+        {
+            screenLines[i] = NewText("Line" + i, panelRect, 32, Color.white, TextAnchor.MiddleCenter);
+            SetTopStretch(screenLines[i].rectTransform, 20f, 20f, 110f + i * 44f, 40f);
+        }
+
+        screenHint = NewText("Hint", panelRect, 26, Gold, TextAnchor.MiddleCenter);
+        RectTransform hr = screenHint.rectTransform;
+        hr.anchorMin = new Vector2(0f, 0f);
+        hr.anchorMax = new Vector2(1f, 0f);
+        hr.pivot = new Vector2(0.5f, 0f);
+        hr.offsetMin = new Vector2(20f, 18f);
+        hr.offsetMax = new Vector2(-20f, 58f);
+
+        screenRoot.SetActive(false);
+    }
+
     Bubble MakeBubble()
     {
         Bubble b = new Bubble();
@@ -298,6 +350,7 @@ public class GameUI : MonoBehaviour
 
         if (hudRoot.activeSelf != playing) hudRoot.SetActive(playing);
         if (crossRoot.activeSelf != playing) crossRoot.SetActive(playing);
+        if (screenRoot.activeSelf == playing) screenRoot.SetActive(!playing);
 
         if (!playing)
         {
@@ -305,12 +358,114 @@ public class GameUI : MonoBehaviour
             {
                 if (bubbles[i].Rect.gameObject.activeSelf) bubbles[i].Rect.gameObject.SetActive(false);
             }
+            UpdateScreen(wm);
             return;
         }
 
         UpdateHud(wm);
         UpdateBubbles(wm);
         UpdateCrosshair();
+    }
+
+    void SetLine(int index, string text, Color color)
+    {
+        screenLines[index].text = text;
+        screenLines[index].color = color;
+    }
+
+    void ShowScreen(string title, Color titleColor, int lineCount, string hint)
+    {
+        screenTitle.text = title;
+        screenTitle.color = titleColor;
+        screenHint.text = hint;
+        panelRect.sizeDelta = new Vector2(780f, 110f + lineCount * 44f + 90f);
+    }
+
+    Color UpgradeColor(bool maxed, int cost, int money)
+    {
+        if (maxed) return Gold;
+        return money >= cost ? Green : Grey;
+    }
+
+    void UpdateScreen(WrapManager wm)
+    {
+        for (int i = 0; i < screenLines.Length; i++)
+        {
+            screenLines[i].text = "";
+            screenLines[i].color = Color.white;
+        }
+
+        switch (wm.State)
+        {
+            case GameState.Menu:
+                if (wm.HasSave)
+                    SetLine(0, "[1] Devam Et  (Gün " + wm.SaveDay + "  -  " + wm.SaveMoney + " TL)", Green);
+                else
+                    SetLine(0, "[1] Devam Et  (kayıt yok)", Grey);
+                SetLine(1, "[2] Yeni Oyun", Color.white);
+                SetLine(2, "[3] Çıkış", Color.white);
+                ShowScreen("DÖNER SİMÜLATÖRÜ", Gold, 3, "Oyun her gün sonunda otomatik kaydedilir.");
+                break;
+
+            case GameState.Paused:
+                SetLine(0, "[1] Devam Et  (ESC)", Color.white);
+                SetLine(1, "[2] Ana Menü", Color.white);
+                SetLine(2, "[3] Çıkış", Color.white);
+                ShowScreen("DURAKLATILDI", Gold, 3, "Ana menüye dönersen bugünkü ilerleme kaybolur.");
+                break;
+
+            case GameState.DayReport:
+            case GameState.GameOver:
+                DrawReportScreen(wm);
+                break;
+        }
+    }
+
+    void DrawReportScreen(WrapManager wm)
+    {
+        bool gameOver = wm.State == GameState.GameOver;
+        int max = wm.MaxUpgradeLevel;
+
+        SetLine(0, "Servis edilen müşteri: " + wm.DayServed, Color.white);
+        SetLine(1, "Kaçan müşteri: " + wm.DayMissed, Color.white);
+        SetLine(2, "Kazanç: +" + wm.DayEarned + " TL", Green);
+        SetLine(3, "Ceza: -" + wm.DayPenalty + " TL", Pink);
+
+        if (gameOver)
+            SetLine(4, "Kira: " + wm.RentDue + " TL (ödenemedi!)", Pink);
+        else
+            SetLine(4, "Kira: -" + wm.RentDue + " TL", Pink);
+
+        SetLine(5, "Kasadaki para: " + wm.Money + " TL", Color.white);
+
+        if (gameOver)
+        {
+            ShowScreen("OYUN BİTTİ", Color.red, 6, "R: yeniden başla   |   M: ana menü");
+            return;
+        }
+
+        SetLine(6, "YÜKSELTMELER", Gold);
+
+        bool speedMax = wm.SpeedLevel >= max;
+        string speedText = speedMax
+            ? "[1] Hız  (MAKS)"
+            : "[1] Hız  Sv." + wm.SpeedLevel + "/" + max + "  -  " + wm.NextSpeedCost() + " TL";
+        SetLine(7, speedText, UpgradeColor(speedMax, wm.NextSpeedCost(), wm.Money));
+
+        bool priceMax = wm.PriceLevel >= max;
+        string priceText = priceMax
+            ? "[2] Fiyat  (MAKS)"
+            : "[2] Fiyat  Sv." + wm.PriceLevel + "/" + max + "  -  " + wm.NextPriceCost() + " TL";
+        SetLine(8, priceText, UpgradeColor(priceMax, wm.NextPriceCost(), wm.Money));
+
+        string onionText = wm.OnionUnlocked
+            ? "[3] Soğan istasyonu  (SATIN ALINDI)"
+            : "[3] Soğan istasyonu  -  " + wm.OnionCost + " TL";
+        SetLine(9, onionText, UpgradeColor(wm.OnionUnlocked, wm.OnionCost, wm.Money));
+
+        SetLine(10, wm.MessageText, wm.MessageColor);
+
+        ShowScreen("GÜN " + wm.Day + " BİTTİ", Gold, 11, "ENTER: yeni gün   |   M: ana menü");
     }
 
     void UpdateHud(WrapManager wm)

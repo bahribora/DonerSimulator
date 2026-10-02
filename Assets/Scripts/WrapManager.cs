@@ -102,6 +102,17 @@ public class WrapManager : MonoBehaviour
     public string MessageText { get { return messageTimer > 0f ? message : ""; } }
     public Color MessageColor { get { return messageColor; } }
 
+    public bool HasSave { get { return menuSave != null; } }
+    public int SaveDay { get { return menuSave != null ? menuSave.Day : 0; } }
+    public int SaveMoney { get { return menuSave != null ? menuSave.Money : 0; } }
+
+    public int DayServed { get { return dayServed; } }
+    public int DayMissed { get { return dayMissed; } }
+    public int DayEarned { get { return dayEarned; } }
+    public int DayPenalty { get { return dayPenalty; } }
+    public int RentDue { get { return rentDue; } }
+    public int MaxUpgradeLevel { get { return MaxLevel; } }
+
     public bool WrapHas(Ingredient i)
     {
         return wrap.Contains(i);
@@ -278,12 +289,12 @@ public class WrapManager : MonoBehaviour
         return BaseRent + (day - 1) * RentIncrease;
     }
 
-    int NextSpeedCost()
+    public int NextSpeedCost()
     {
         return SpeedCost * (SpeedLevel + 1);
     }
 
-    int NextPriceCost()
+    public int NextPriceCost()
     {
         return PriceCost * (PriceLevel + 1);
     }
@@ -711,209 +722,5 @@ public class WrapManager : MonoBehaviour
         wrap.Clear();
         ShowMessage("Dürüm çöpe atıldı.", Color.white);
         Sound(GameSound.Trashed);
-    }
-
-    void DrawMenu()
-    {
-        GUI.color = new Color(0f, 0f, 0f, 0.75f);
-        GUI.DrawTexture(new Rect(0f, 0f, Screen.width, Screen.height), Texture2D.whiteTexture);
-
-        float w = 700f;
-        float h = 460f;
-        float x = (Screen.width - w) / 2f;
-        float y = (Screen.height - h) / 2f;
-
-        GUI.color = new Color(0.12f, 0.12f, 0.12f, 1f);
-        GUI.DrawTexture(new Rect(x, y, w, h), Texture2D.whiteTexture);
-        GUI.color = Color.white;
-
-        GUIStyle title = new GUIStyle(GUI.skin.label);
-        title.fontSize = 48;
-        title.fontStyle = FontStyle.Bold;
-        title.alignment = TextAnchor.MiddleCenter;
-        title.normal.textColor = new Color(1f, 0.85f, 0.2f);
-        GUI.Label(new Rect(x, y + 30f, w, 70f), "DÖNER SİMÜLATÖRÜ", title);
-
-        GUIStyle line = new GUIStyle(GUI.skin.label);
-        line.fontSize = 30;
-        line.alignment = TextAnchor.MiddleCenter;
-
-        if (menuSave != null)
-        {
-            line.normal.textColor = new Color(0.4f, 1f, 0.4f);
-            GUI.Label(new Rect(x, y + 140f, w, 44f),
-                "[1] Devam Et  (Gün " + menuSave.Day + "  -  " + menuSave.Money + " TL)", line);
-        }
-        else
-        {
-            line.normal.textColor = new Color(0.5f, 0.5f, 0.5f);
-            GUI.Label(new Rect(x, y + 140f, w, 44f), "[1] Devam Et  (kayıt yok)", line);
-        }
-
-        line.normal.textColor = Color.white;
-        GUI.Label(new Rect(x, y + 200f, w, 44f), "[2] Yeni Oyun", line);
-        GUI.Label(new Rect(x, y + 260f, w, 44f), "[3] Çıkış", line);
-
-        GUIStyle hint = new GUIStyle(GUI.skin.label);
-        hint.fontSize = 20;
-        hint.alignment = TextAnchor.MiddleCenter;
-        hint.normal.textColor = new Color(0.7f, 0.7f, 0.7f);
-        GUI.Label(new Rect(x, y + h - 70f, w, 36f), "Oyun her gün sonunda otomatik kaydedilir.", hint);
-    }
-
-    void DrawPause()
-    {
-        GUI.color = new Color(0f, 0f, 0f, 0.6f);
-        GUI.DrawTexture(new Rect(0f, 0f, Screen.width, Screen.height), Texture2D.whiteTexture);
-
-        float w = 700f;
-        float h = 420f;
-        float x = (Screen.width - w) / 2f;
-        float y = (Screen.height - h) / 2f;
-
-        GUI.color = new Color(0.12f, 0.12f, 0.12f, 1f);
-        GUI.DrawTexture(new Rect(x, y, w, h), Texture2D.whiteTexture);
-        GUI.color = Color.white;
-
-        GUIStyle title = new GUIStyle(GUI.skin.label);
-        title.fontSize = 44;
-        title.fontStyle = FontStyle.Bold;
-        title.alignment = TextAnchor.MiddleCenter;
-        title.normal.textColor = new Color(1f, 0.85f, 0.2f);
-        GUI.Label(new Rect(x, y + 30f, w, 60f), "DURAKLATILDI", title);
-
-        GUIStyle line = new GUIStyle(GUI.skin.label);
-        line.fontSize = 30;
-        line.alignment = TextAnchor.MiddleCenter;
-        line.normal.textColor = Color.white;
-
-        GUI.Label(new Rect(x, y + 120f, w, 44f), "[1] Devam Et  (ESC)", line);
-        GUI.Label(new Rect(x, y + 180f, w, 44f), "[2] Ana Menü", line);
-        GUI.Label(new Rect(x, y + 240f, w, 44f), "[3] Çıkış", line);
-
-        GUIStyle hint = new GUIStyle(GUI.skin.label);
-        hint.fontSize = 20;
-        hint.alignment = TextAnchor.MiddleCenter;
-        hint.normal.textColor = new Color(0.7f, 0.7f, 0.7f);
-        GUI.Label(new Rect(x, y + h - 70f, w, 36f), "Ana menüye dönersen bugünkü ilerleme kaybolur.", hint);
-    }
-
-    void DrawUpgradeLine(float x, float y, float w, string text, bool maxed, int cost)
-    {
-        GUIStyle s = new GUIStyle(GUI.skin.label);
-        s.fontSize = 24;
-        s.alignment = TextAnchor.MiddleCenter;
-
-        if (maxed) s.normal.textColor = new Color(1f, 0.85f, 0.2f);
-        else if (Money >= cost) s.normal.textColor = new Color(0.4f, 1f, 0.4f);
-        else s.normal.textColor = new Color(0.6f, 0.6f, 0.6f);
-
-        GUI.Label(new Rect(x, y, w, 36f), text, s);
-    }
-
-    void DrawReport()
-    {
-        bool gameOver = State == GameState.GameOver;
-
-        GUI.color = new Color(0f, 0f, 0f, 0.8f);
-        GUI.DrawTexture(new Rect(0f, 0f, Screen.width, Screen.height), Texture2D.whiteTexture);
-
-        float w = 700f;
-        float h = gameOver ? 520f : 680f;
-        float x = (Screen.width - w) / 2f;
-        float y = (Screen.height - h) / 2f;
-
-        GUI.color = new Color(0.12f, 0.12f, 0.12f, 1f);
-        GUI.DrawTexture(new Rect(x, y, w, h), Texture2D.whiteTexture);
-        GUI.color = Color.white;
-
-        GUIStyle title = new GUIStyle(GUI.skin.label);
-        title.fontSize = 40;
-        title.fontStyle = FontStyle.Bold;
-        title.alignment = TextAnchor.MiddleCenter;
-        title.normal.textColor = gameOver ? Color.red : new Color(1f, 0.85f, 0.2f);
-        GUI.Label(new Rect(x, y + 20f, w, 60f), gameOver ? "OYUN BİTTİ" : "GÜN " + day + " BİTTİ", title);
-
-        GUIStyle line = new GUIStyle(GUI.skin.label);
-        line.fontSize = 28;
-        line.alignment = TextAnchor.MiddleCenter;
-        line.normal.textColor = Color.white;
-
-        float ly = y + 100f;
-        float step = 48f;
-
-        GUI.Label(new Rect(x, ly, w, 40f), "Servis edilen müşteri: " + dayServed, line);
-        GUI.Label(new Rect(x, ly + step, w, 40f), "Kaçan müşteri: " + dayMissed, line);
-
-        line.normal.textColor = new Color(0.4f, 1f, 0.4f);
-        GUI.Label(new Rect(x, ly + step * 2f, w, 40f), "Kazanç: +" + dayEarned + " TL", line);
-
-        line.normal.textColor = new Color(1f, 0.5f, 0.5f);
-        GUI.Label(new Rect(x, ly + step * 3f, w, 40f), "Ceza: -" + dayPenalty + " TL", line);
-
-        if (gameOver)
-            GUI.Label(new Rect(x, ly + step * 4f, w, 40f), "Kira: " + rentDue + " TL (ödenemedi!)", line);
-        else
-            GUI.Label(new Rect(x, ly + step * 4f, w, 40f), "Kira: -" + rentDue + " TL", line);
-
-        line.normal.textColor = Color.white;
-        GUI.Label(new Rect(x, ly + step * 5f, w, 40f), "Kasadaki para: " + Money + " TL", line);
-
-        if (!gameOver)
-        {
-            GUIStyle up = new GUIStyle(line);
-            up.fontSize = 24;
-            up.fontStyle = FontStyle.Bold;
-            up.normal.textColor = new Color(1f, 0.85f, 0.2f);
-            GUI.Label(new Rect(x, y + 395f, w, 36f), "YÜKSELTMELER", up);
-
-            bool speedMax = SpeedLevel >= MaxLevel;
-            string speedText = speedMax
-                ? "[1] Hız  (MAKS)"
-                : "[1] Hız  Sv." + SpeedLevel + "/" + MaxLevel + "  -  " + NextSpeedCost() + " TL";
-            DrawUpgradeLine(x, y + 435f, w, speedText, speedMax, NextSpeedCost());
-
-            bool priceMax = PriceLevel >= MaxLevel;
-            string priceText = priceMax
-                ? "[2] Fiyat  (MAKS)"
-                : "[2] Fiyat  Sv." + PriceLevel + "/" + MaxLevel + "  -  " + NextPriceCost() + " TL";
-            DrawUpgradeLine(x, y + 475f, w, priceText, priceMax, NextPriceCost());
-
-            string onionText = OnionUnlocked
-                ? "[3] Soğan istasyonu  (SATIN ALINDI)"
-                : "[3] Soğan istasyonu  -  " + OnionCost + " TL";
-            DrawUpgradeLine(x, y + 515f, w, onionText, OnionUnlocked, OnionCost);
-
-            if (messageTimer > 0f)
-            {
-                GUIStyle msg = new GUIStyle(line);
-                msg.fontSize = 24;
-                msg.normal.textColor = messageColor;
-                GUI.Label(new Rect(x, y + h - 95f, w, 36f), message, msg);
-            }
-        }
-
-        GUIStyle hint = new GUIStyle(line);
-        hint.fontSize = 24;
-        hint.normal.textColor = new Color(1f, 0.85f, 0.2f);
-        GUI.Label(new Rect(x, y + h - 50f, w, 40f),
-            gameOver ? "R: yeniden başla   |   M: ana menü" : "ENTER: yeni gün   |   M: ana menü", hint);
-    }
-
-    void OnGUI()
-    {
-        // Oyun sırasındaki arayüz artık GameUI (Canvas) tarafından çiziliyor
-        if (State == GameState.Menu)
-        {
-            DrawMenu();
-        }
-        else if (State == GameState.Paused)
-        {
-            DrawPause();
-        }
-        else if (State == GameState.DayReport || State == GameState.GameOver)
-        {
-            DrawReport();
-        }
     }
 }

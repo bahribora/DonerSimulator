@@ -16,11 +16,33 @@ public class FirstPersonController : MonoBehaviour
     Interactable holdTarget;
     float holdProgress;
 
+    // Arayüzün (GameUI) okuduğu bilgiler
+    public string CurrentPrompt
+    {
+        get { return current != null ? current.Prompt : null; }
+    }
+
+    // Basılı tutma yoksa -1, varsa 0 ile 1 arası
+    public float HoldRatio
+    {
+        get
+        {
+            if (holdTarget != null && holdTarget.HoldTime > 0f)
+                return Mathf.Clamp01(holdProgress / holdTarget.HoldTime);
+            return -1f;
+        }
+    }
+
     void Start()
     {
         controller = GetComponent<CharacterController>();
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
+    }
+
+    bool IsPlaying()
+    {
+        return WrapManager.Instance == null || WrapManager.Instance.State == GameState.Playing;
     }
 
     void Update()
@@ -29,30 +51,31 @@ public class FirstPersonController : MonoBehaviour
         Mouse mouse = Mouse.current;
         if (kb == null || mouse == null) return;
 
-        Vector2 look = mouse.delta.ReadValue() * LookSensitivity;
-        transform.Rotate(0f, look.x, 0f);
-        pitch = Mathf.Clamp(pitch - look.y, -80f, 80f);
-        CameraHolder.localRotation = Quaternion.Euler(pitch, 0f, 0f);
+        bool playing = IsPlaying();
 
-        float speed = MoveSpeed;
-        if (WrapManager.Instance != null) speed *= WrapManager.Instance.SpeedMultiplier;
-
-        float x = (kb.dKey.isPressed ? 1f : 0f) - (kb.aKey.isPressed ? 1f : 0f);
-        float z = (kb.wKey.isPressed ? 1f : 0f) - (kb.sKey.isPressed ? 1f : 0f);
-        Vector3 move = (transform.right * x + transform.forward * z).normalized * speed;
-
-        if (controller.isGrounded && verticalVelocity < 0f) verticalVelocity = -1f;
-        verticalVelocity += Physics.gravity.y * Time.deltaTime;
-        move.y = verticalVelocity;
-        controller.Move(move * Time.deltaTime);
-
-        UpdateInteraction(kb);
-
-        if (kb.escapeKey.wasPressedThisFrame)
+        if (playing)
         {
-            Cursor.lockState = CursorLockMode.None;
-            Cursor.visible = true;
+            Vector2 look = mouse.delta.ReadValue() * LookSensitivity;
+            transform.Rotate(0f, look.x, 0f);
+            pitch = Mathf.Clamp(pitch - look.y, -80f, 80f);
+            CameraHolder.localRotation = Quaternion.Euler(pitch, 0f, 0f);
+
+            float speed = MoveSpeed;
+            if (WrapManager.Instance != null) speed *= WrapManager.Instance.SpeedMultiplier;
+
+            float x = (kb.dKey.isPressed ? 1f : 0f) - (kb.aKey.isPressed ? 1f : 0f);
+            float z = (kb.wKey.isPressed ? 1f : 0f) - (kb.sKey.isPressed ? 1f : 0f);
+            Vector3 move = (transform.right * x + transform.forward * z).normalized * speed;
+
+            if (controller.isGrounded && verticalVelocity < 0f) verticalVelocity = -1f;
+            verticalVelocity += Physics.gravity.y * Time.deltaTime;
+            move.y = verticalVelocity;
+            controller.Move(move * Time.deltaTime);
         }
+
+        UpdateInteraction(kb, playing);
+
+        // Unity editöründe ESC imleci kendiliğinden serbest bırakır, oyun penceresine tıklayınca tekrar kilitlenir
         if (mouse.leftButton.wasPressedThisFrame && Cursor.lockState != CursorLockMode.Locked)
         {
             Cursor.lockState = CursorLockMode.Locked;
@@ -66,9 +89,16 @@ public class FirstPersonController : MonoBehaviour
         holdProgress = 0f;
     }
 
-    void UpdateInteraction(Keyboard kb)
+    void UpdateInteraction(Keyboard kb, bool playing)
     {
         current = null;
+
+        if (!playing)
+        {
+            ResetHold();
+            return;
+        }
+
         Transform cam = CameraHolder;
         RaycastHit hit;
         if (Physics.Raycast(cam.position, cam.forward, out hit, InteractRange))
@@ -76,16 +106,8 @@ public class FirstPersonController : MonoBehaviour
             current = hit.collider.GetComponentInParent<Interactable>();
         }
 
-        bool playing = WrapManager.Instance == null || WrapManager.Instance.State == GameState.Playing;
-
         if (current != null && current.HoldTime > 0f)
         {
-            if (!playing)
-            {
-                ResetHold();
-                return;
-            }
-
             if (kb.eKey.wasPressedThisFrame && current.CanInteract())
             {
                 holdTarget = current;
@@ -113,46 +135,6 @@ public class FirstPersonController : MonoBehaviour
             {
                 current.Interact();
             }
-        }
-    }
-
-    void OnGUI()
-    {
-        float cx = Screen.width / 2f;
-        float cy = Screen.height / 2f;
-        GUI.color = Color.white;
-        GUI.DrawTexture(new Rect(cx - 2f, cy - 2f, 4f, 4f), Texture2D.whiteTexture);
-
-        if (current != null)
-        {
-            GUIStyle s = new GUIStyle(GUI.skin.label);
-            s.fontSize = 24;
-            s.alignment = TextAnchor.MiddleCenter;
-            s.normal.textColor = Color.white;
-            GUI.Label(new Rect(cx - 250f, cy + 30f, 500f, 40f), "[E] " + current.Prompt, s);
-        }
-
-        if (holdTarget != null && holdTarget.HoldTime > 0f)
-        {
-            float ratio = Mathf.Clamp01(holdProgress / holdTarget.HoldTime);
-            float bw = 300f;
-            float bh = 22f;
-            float bx = cx - bw / 2f;
-            float by = cy + 80f;
-
-            GUI.color = new Color(0f, 0f, 0f, 0.7f);
-            GUI.DrawTexture(new Rect(bx - 4f, by - 4f, bw + 8f, bh + 8f), Texture2D.whiteTexture);
-            GUI.color = new Color(0.25f, 0.25f, 0.25f, 1f);
-            GUI.DrawTexture(new Rect(bx, by, bw, bh), Texture2D.whiteTexture);
-            GUI.color = new Color(0.85f, 0.45f, 0.2f, 1f);
-            GUI.DrawTexture(new Rect(bx, by, bw * ratio, bh), Texture2D.whiteTexture);
-            GUI.color = Color.white;
-
-            GUIStyle t = new GUIStyle(GUI.skin.label);
-            t.fontSize = 20;
-            t.alignment = TextAnchor.MiddleCenter;
-            t.normal.textColor = Color.white;
-            GUI.Label(new Rect(cx - 150f, by + 30f, 300f, 30f), "Kesiliyor...", t);
         }
     }
 }

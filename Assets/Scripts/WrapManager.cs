@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-public enum Ingredient { Lavas, Et, Marul, Domates, Sos, Sogan }
+public enum Ingredient { Lavas, Et, Marul, Domates, Sos, Sogan, Tursu }
 
 public enum GameState { Menu, Playing, Paused, DayReport, GameOver }
 
@@ -29,6 +29,7 @@ public class SaveData
     public int SpeedLevel;
     public int PriceLevel;
     public bool OnionUnlocked;
+    public bool PickleUnlocked;
     public int Served;
     public int Missed;
 }
@@ -58,6 +59,7 @@ public class WrapManager : MonoBehaviour
     public int SpeedCost = 80;
     public int PriceCost = 100;
     public int OnionCost = 150;
+    public int PickleCost = 200;
     public float SpeedBonusPerLevel = 0.15f;
     public float PriceBonusPerLevel = 0.2f;
 
@@ -70,6 +72,7 @@ public class WrapManager : MonoBehaviour
     public int SpeedLevel { get; private set; }
     public int PriceLevel { get; private set; }
     public bool OnionUnlocked { get; private set; }
+    public bool PickleUnlocked { get; private set; }
 
     // Elindeki dürümün içindekiler (sadece okunur)
     public IReadOnlyList<Ingredient> WrapContents
@@ -138,7 +141,7 @@ public class WrapManager : MonoBehaviour
     const int MaxLevel = 3;
     const string SaveKey = "DonerSimulatorSave";
 
-    static readonly string[] Names = { "Lavaş", "Et", "Marul", "Domates", "Sos", "Soğan" };
+    static readonly string[] Names = { "Lavaş", "Et", "Marul", "Domates", "Sos", "Soğan", "Turşu" };
 
     class Customer
     {
@@ -201,6 +204,7 @@ public class WrapManager : MonoBehaviour
         d.SpeedLevel = SpeedLevel;
         d.PriceLevel = PriceLevel;
         d.OnionUnlocked = OnionUnlocked;
+        d.PickleUnlocked = PickleUnlocked;
         d.Served = Served;
         d.Missed = Missed;
 
@@ -248,6 +252,7 @@ public class WrapManager : MonoBehaviour
         SpeedLevel = 0;
         PriceLevel = 0;
         OnionUnlocked = false;
+        PickleUnlocked = false;
         StartDay();
     }
 
@@ -260,6 +265,7 @@ public class WrapManager : MonoBehaviour
         SpeedLevel = Mathf.Clamp(menuSave.SpeedLevel, 0, MaxLevel);
         PriceLevel = Mathf.Clamp(menuSave.PriceLevel, 0, MaxLevel);
         OnionUnlocked = menuSave.OnionUnlocked;
+        PickleUnlocked = menuSave.PickleUnlocked;
         Served = menuSave.Served;
         Missed = menuSave.Missed;
         StartDay();
@@ -462,6 +468,29 @@ public class WrapManager : MonoBehaviour
         Sound(GameSound.Upgrade);
     }
 
+    void BuyPickle()
+    {
+        if (PickleUnlocked)
+        {
+            ShowMessage("Turşu zaten açık.", Color.white);
+            Sound(GameSound.Denied);
+            return;
+        }
+
+        if (Money < PickleCost)
+        {
+            ShowMessage("Yeterli paran yok!", Color.red);
+            Sound(GameSound.Denied);
+            return;
+        }
+
+        Money -= PickleCost;
+        PickleUnlocked = true;
+        SaveGame(day + 1);
+        ShowMessage("Turşu istasyonu açıldı!", new Color(0.4f, 1f, 0.4f));
+        Sound(GameSound.Upgrade);
+    }
+
     void Update()
     {
         if (messageTimer > 0f) messageTimer -= Time.deltaTime;
@@ -507,6 +536,7 @@ public class WrapManager : MonoBehaviour
             if (kb.digit1Key.wasPressedThisFrame || kb.numpad1Key.wasPressedThisFrame) BuySpeed();
             if (kb.digit2Key.wasPressedThisFrame || kb.numpad2Key.wasPressedThisFrame) BuyPrice();
             if (kb.digit3Key.wasPressedThisFrame || kb.numpad3Key.wasPressedThisFrame) BuyOnion();
+            if (kb.digit4Key.wasPressedThisFrame || kb.numpad4Key.wasPressedThisFrame) BuyPickle();
 
             if (kb.mKey.wasPressedThisFrame)
             {
@@ -591,6 +621,7 @@ public class WrapManager : MonoBehaviour
 
         List<Ingredient> extras = new List<Ingredient> { Ingredient.Marul, Ingredient.Domates, Ingredient.Sos };
         if (OnionUnlocked) extras.Add(Ingredient.Sogan);
+        if (PickleUnlocked) extras.Add(Ingredient.Tursu);
 
         for (int i = 0; i < extras.Count; i++)
         {

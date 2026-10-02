@@ -219,6 +219,7 @@ public class HeldWrap : MonoBehaviour
             case Ingredient.Marul: return new Vector3(0.32f, 0.012f, 0.22f);
             case Ingredient.Domates: return new Vector3(0.26f, 0.02f, 0.08f);
             case Ingredient.Sogan: return new Vector3(0.28f, 0.012f, 0.14f);
+            case Ingredient.Tursu: return new Vector3(0.24f, 0.016f, 0.06f);
             default: return new Vector3(0.30f, 0.01f, 0.05f);
         }
     }
@@ -230,6 +231,7 @@ public class HeldWrap : MonoBehaviour
             case Ingredient.Marul: return 0.02f;
             case Ingredient.Domates: return -0.05f;
             case Ingredient.Sogan: return 0.04f;
+            case Ingredient.Tursu: return -0.09f;
             case Ingredient.Sos: return 0.01f;
             default: return 0f;
         }
@@ -244,6 +246,7 @@ public class HeldWrap : MonoBehaviour
             case Ingredient.Marul: return new Color(0.3f, 0.75f, 0.3f);
             case Ingredient.Domates: return new Color(0.9f, 0.2f, 0.15f);
             case Ingredient.Sogan: return new Color(0.7f, 0.4f, 0.7f);
+            case Ingredient.Tursu: return new Color(0.45f, 0.6f, 0.2f);
             default: return new Color(0.95f, 0.95f, 0.85f);
         }
     }

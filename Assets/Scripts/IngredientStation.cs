@@ -38,11 +38,23 @@ public class IngredientStation : Interactable
         }
     }
 
+    // Soğan ve turşu istasyonları satın alınana kadar kapalı kalır
+    bool IsOpen()
+    {
+        WrapManager wm = WrapManager.Instance;
+        if (wm == null) return true;
+
+        if (Type == Ingredient.Sogan) return wm.OnionUnlocked;
+        if (Type == Ingredient.Tursu) return wm.PickleUnlocked;
+        return true;
+    }
+
     void Update()
     {
-        if (Type != Ingredient.Sogan || WrapManager.Instance == null) return;
+        if (Type != Ingredient.Sogan && Type != Ingredient.Tursu) return;
+        if (WrapManager.Instance == null) return;
 
-        bool open = WrapManager.Instance.OnionUnlocked;
+        bool open = IsOpen();
         if (open == visible) return;
 
         visible = open;
@@ -78,6 +90,7 @@ public class IngredientStation : Interactable
             case Ingredient.Marul: return new Color(0.3f, 0.75f, 0.3f);
             case Ingredient.Domates: return new Color(0.9f, 0.2f, 0.15f);
             case Ingredient.Sogan: return new Color(0.7f, 0.4f, 0.7f);
+            case Ingredient.Tursu: return new Color(0.45f, 0.6f, 0.2f);
             default: return new Color(0.95f, 0.95f, 0.85f);
         }
     }

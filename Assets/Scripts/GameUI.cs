@@ -463,9 +463,14 @@ public class GameUI : MonoBehaviour
             : "[3] Soğan istasyonu  -  " + wm.OnionCost + " TL";
         SetLine(9, onionText, UpgradeColor(wm.OnionUnlocked, wm.OnionCost, wm.Money));
 
-        SetLine(10, wm.MessageText, wm.MessageColor);
+        string pickleText = wm.PickleUnlocked
+            ? "[4] Turşu istasyonu  (SATIN ALINDI)"
+            : "[4] Turşu istasyonu  -  " + wm.PickleCost + " TL";
+        SetLine(10, pickleText, UpgradeColor(wm.PickleUnlocked, wm.PickleCost, wm.Money));
 
-        ShowScreen("GÜN " + wm.Day + " BİTTİ", Gold, 11, "ENTER: yeni gün   |   M: ana menü");
+        SetLine(11, wm.MessageText, wm.MessageColor);
+
+        ShowScreen("GÜN " + wm.Day + " BİTTİ", Gold, 12, "ENTER: yeni gün   |   M: ana menü");
     }
 
     void UpdateHud(WrapManager wm)
